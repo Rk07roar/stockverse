@@ -1,0 +1,117 @@
+=== BSE Bhav Copy Diagnostic ===
+
+Step 1: Testing BSE homepage connectivity...
+  BSE homepage: HTTP 200
+  Response length: 12565 bytes
+  Content-Type: text/html
+  Cookies set: []
+
+Step 2: Testing BSE BhavCopy page...
+  BhavCopy page: HTTP 200, 12565 bytes
+
+Step 3: Testing all download URL formats for last 5 trading days...
+
+--- Date: 2026-06-23 ---
+  200 | ZIP=False | CT=text/html
+  URL: download/BhavCopy/Equity/BhavCopy_BSE_CM_0_0_0_20260623_F_0000.csv.zip
+  First 150 bytes: b'<!DOCTYPE html><html lang="en" data-critters-container=""><head>\n    <meta charset="utf-8">\n    <title>\n      LIVE Stock/Share Market | Indian Stock/S'
+
+  200 | ZIP=False | CT=text/html
+  URL: s://www.bseindia.com/download/BhavCopy/Equity/EQ_ISINCODE_20260623.zip
+  First 150 bytes: b'<!DOCTYPE html><html lang="en" data-critters-container=""><head>\n    <meta charset="utf-8">\n    <title>\n      LIVE Stock/Share Market | Indian Stock/S'
+
+  200 | ZIP=False | CT=text/html
+  URL: https://www.bseindia.com/download/BhavCopy/Equity/EQ230626_CSV.ZIP
+  First 150 bytes: b'<!DOCTYPE html><html lang="en" data-critters-container=""><head>\n    <meta charset="utf-8">\n    <title>\n      LIVE Stock/Share Market | Indian Stock/S'
+
+  ERROR: HTTPSConnectionPool(host='archives.bseindia.com', port=443): Max retries exceeded with url: /download/BhavCopy/Equity/EQ230626_CSV.ZIP (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x0000019F47141A90>: Failed to resolve 'archives.bseindia.com' ([Errno 11001] getaddrinfo failed)"))
+  URL: ttps://archives.bseindia.com/download/BhavCopy/Equity/EQ230626_CSV.ZIP
+
+  200 | ZIP=False | CT=text/html
+  URL: a.com/BseIndiaAPI/api/BhavCopyAll/w?stre=&ddlchart=EQ&strdate=20260623
+  First 150 bytes: b'\r\n\r\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\r\n\r\n<html xmlns="http://w'
+
+
+--- Date: 2026-06-22 ---
+  200 | ZIP=False | CT=text/html
+  URL: download/BhavCopy/Equity/BhavCopy_BSE_CM_0_0_0_20260622_F_0000.csv.zip
+  First 150 bytes: b'<!DOCTYPE html><html lang="en" data-critters-container=""><head>\n    <meta charset="utf-8">\n    <title>\n      LIVE Stock/Share Market | Indian Stock/S'
+
+  200 | ZIP=False | CT=text/html
+  URL: s://www.bseindia.com/download/BhavCopy/Equity/EQ_ISINCODE_20260622.zip
+  First 150 bytes: b'<!DOCTYPE html><html lang="en" data-critters-container=""><head>\n    <meta charset="utf-8">\n    <title>\n      LIVE Stock/Share Market | Indian Stock/S'
+
+  200 | ZIP=False | CT=text/html
+  URL: https://www.bseindia.com/download/BhavCopy/Equity/EQ220626_CSV.ZIP
+  First 150 bytes: b'<!DOCTYPE html><html lang="en" data-critters-container=""><head>\n    <meta charset="utf-8">\n    <title>\n      LIVE Stock/Share Market | Indian Stock/S'
+
+  ERROR: HTTPSConnectionPool(host='archives.bseindia.com', port=443): Max retries exceeded with url: /download/BhavCopy/Equity/EQ220626_CSV.ZIP (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x0000019F471420D0>: Failed to resolve 'archives.bseindia.com' ([Errno 11001] getaddrinfo failed)"))
+  URL: ttps://archives.bseindia.com/download/BhavCopy/Equity/EQ220626_CSV.ZIP
+
+  200 | ZIP=False | CT=text/html
+  URL: a.com/BseIndiaAPI/api/BhavCopyAll/w?stre=&ddlchart=EQ&strdate=20260622
+  First 150 bytes: b'\r\n\r\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\r\n\r\n<html xmlns="http://w'
+
+
+--- Date: 2026-06-19 ---
+  200 | ZIP=False | CT=text/html
+  URL: download/BhavCopy/Equity/BhavCopy_BSE_CM_0_0_0_20260619_F_0000.csv.zip
+  First 150 bytes: b'<!DOCTYPE html><html lang="en" data-critters-container=""><head>\n    <meta charset="utf-8">\n    <title>\n      LIVE Stock/Share Market | Indian Stock/S'
+
+  200 | ZIP=False | CT=text/html
+  URL: s://www.bseindia.com/download/BhavCopy/Equity/EQ_ISINCODE_20260619.zip
+  First 150 bytes: b'<!DOCTYPE html><html lang="en" data-critters-container=""><head>\n    <meta charset="utf-8">\n    <title>\n      LIVE Stock/Share Market | Indian Stock/S'
+
+  200 | ZIP=False | CT=text/html
+  URL: https://www.bseindia.com/download/BhavCopy/Equity/EQ190626_CSV.ZIP
+  First 150 bytes: b'<!DOCTYPE html><html lang="en" data-critters-container=""><head>\n    <meta charset="utf-8">\n    <title>\n      LIVE Stock/Share Market | Indian Stock/S'
+
+  ERROR: HTTPSConnectionPool(host='archives.bseindia.com', port=443): Max retries exceeded with url: /download/BhavCopy/Equity/EQ190626_CSV.ZIP (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x0000019F471411D0>: Failed to resolve 'archives.bseindia.com' ([Errno 11001] getaddrinfo failed)"))
+  URL: ttps://archives.bseindia.com/download/BhavCopy/Equity/EQ190626_CSV.ZIP
+
+  200 | ZIP=False | CT=text/html
+  URL: a.com/BseIndiaAPI/api/BhavCopyAll/w?stre=&ddlchart=EQ&strdate=20260619
+  First 150 bytes: b'\r\n\r\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\r\n\r\n<html xmlns="http://w'
+
+
+--- Date: 2026-06-18 ---
+  200 | ZIP=False | CT=text/html
+  URL: download/BhavCopy/Equity/BhavCopy_BSE_CM_0_0_0_20260618_F_0000.csv.zip
+  First 150 bytes: b'<!DOCTYPE html><html lang="en" data-critters-container=""><head>\n    <meta charset="utf-8">\n    <title>\n      LIVE Stock/Share Market | Indian Stock/S'
+
+  200 | ZIP=False | CT=text/html
+  URL: s://www.bseindia.com/download/BhavCopy/Equity/EQ_ISINCODE_20260618.zip
+  First 150 bytes: b'<!DOCTYPE html><html lang="en" data-critters-container=""><head>\n    <meta charset="utf-8">\n    <title>\n      LIVE Stock/Share Market | Indian Stock/S'
+
+  200 | ZIP=False | CT=text/html
+  URL: https://www.bseindia.com/download/BhavCopy/Equity/EQ180626_CSV.ZIP
+  First 150 bytes: b'<!DOCTYPE html><html lang="en" data-critters-container=""><head>\n    <meta charset="utf-8">\n    <title>\n      LIVE Stock/Share Market | Indian Stock/S'
+
+  ERROR: HTTPSConnectionPool(host='archives.bseindia.com', port=443): Max retries exceeded with url: /download/BhavCopy/Equity/EQ180626_CSV.ZIP (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x0000019F47141F90>: Failed to resolve 'archives.bseindia.com' ([Errno 11001] getaddrinfo failed)"))
+  URL: ttps://archives.bseindia.com/download/BhavCopy/Equity/EQ180626_CSV.ZIP
+
+  200 | ZIP=False | CT=text/html
+  URL: a.com/BseIndiaAPI/api/BhavCopyAll/w?stre=&ddlchart=EQ&strdate=20260618
+  First 150 bytes: b'\r\n\r\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\r\n\r\n<html xmlns="http://w'
+
+
+--- Date: 2026-06-17 ---
+  200 | ZIP=False | CT=text/html
+  URL: download/BhavCopy/Equity/BhavCopy_BSE_CM_0_0_0_20260617_F_0000.csv.zip
+  First 150 bytes: b'<!DOCTYPE html><html lang="en" data-critters-container=""><head>\n    <meta charset="utf-8">\n    <title>\n      LIVE Stock/Share Market | Indian Stock/S'
+
+  200 | ZIP=False | CT=text/html
+  URL: s://www.bseindia.com/download/BhavCopy/Equity/EQ_ISINCODE_20260617.zip
+  First 150 bytes: b'<!DOCTYPE html><html lang="en" data-critters-container=""><head>\n    <meta charset="utf-8">\n    <title>\n      LIVE Stock/Share Market | Indian Stock/S'
+
+  200 | ZIP=False | CT=text/html
+  URL: https://www.bseindia.com/download/BhavCopy/Equity/EQ170626_CSV.ZIP
+  First 150 bytes: b'<!DOCTYPE html><html lang="en" data-critters-container=""><head>\n    <meta charset="utf-8">\n    <title>\n      LIVE Stock/Share Market | Indian Stock/S'
+
+  ERROR: HTTPSConnectionPool(host='archives.bseindia.com', port=443): Max retries exceeded with url: /download/BhavCopy/Equity/EQ170626_CSV.ZIP (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x0000019F47142490>: Failed to resolve 'archives.bseindia.com' ([Errno 11001] getaddrinfo failed)"))
+  URL: ttps://archives.bseindia.com/download/BhavCopy/Equity/EQ170626_CSV.ZIP
+
+  200 | ZIP=False | CT=text/html
+  URL: a.com/BseIndiaAPI/api/BhavCopyAll/w?stre=&ddlchart=EQ&strdate=20260617
+  First 150 bytes: b'\r\n\r\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\r\n\r\n<html xmlns="http://w'
+

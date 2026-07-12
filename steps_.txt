@@ -1,0 +1,3 @@
+(.venv) PS C:\Users\hp\Desktop\stockvest_full> cd C:\Users\hp\Desktop\stockvest_full\backend                                                       
+(.venv) PS C:\Users\hp\Desktop\stockvest_full\backend> .venv\Scripts\activate                                                                      
+(.venv) PS C:\Users\hp\Desktop\stockvest_full\backend> uvicorn main:app --reload --port 8000   
