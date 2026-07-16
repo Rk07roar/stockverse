@@ -603,11 +603,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       <span class="nav-badge nb-g" id="nav-watch-count" style="display:none">0</span>
     </div>
     <span class="nav-sec-label">Premium</span>
-    <div class="nav-item" data-panel="options">
-      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h12M8 2v12M4 4l8 8M12 4l-8 8"/></svg>
-      Options Chain
-      <span class="nav-badge nb-r">OI</span>
-    </div>
     <div class="nav-item" data-panel="screener">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M4 8h8M6 12h4"/></svg>
       Screener
@@ -1567,70 +1562,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
         </div>
       </div>
     </div>
-
-<!-- ===== OPTIONS CHAIN PANEL ===== -->
-<div class="panel" id="panel-options">
-  <div class="pg-header">
-    <div>
-      <div class="pg-title">Options Chain</div>
-      <div class="pg-sub">Live OI, Volume, IV per strike · PCR · Max Pain · OI Buildup signals — Free NSE data</div>
-    </div>
-    <div class="pg-actions">
-      <select id="oc-symbol" class="ml-sel" onchange="loadOptionsChain()">
-        <option value="NIFTY">NIFTY</option>
-        <option value="BANKNIFTY">BANKNIFTY</option>
-        <option value="FINNIFTY">FINNIFTY</option>
-      </select>
-      <select id="oc-expiry" class="ml-sel" onchange="loadOptionsChain()"><option>Loading...</option></select>
-      <button class="btn btn-primary btn-sm" onclick="loadOptionsChain()">⟳ Refresh</button>
-    </div>
-  </div>
-
-  <!-- Summary cards -->
-  <div class="g4" id="oc-summary-cards" style="margin-bottom:14px">
-    <div class="stat-card"><div class="sc-lbl">Underlying</div><div class="sc-val" id="oc-underlying">—</div></div>
-    <div class="stat-card"><div class="sc-lbl">PCR <span id="oc-pcr-label" style="font-size:9px;padding:1px 5px;border-radius:4px;margin-left:4px"></span></div><div class="sc-val" id="oc-pcr">—</div></div>
-    <div class="stat-card"><div class="sc-lbl">Max Pain</div><div class="sc-val" id="oc-maxpain">—</div><div class="sc-sub">Strike where option writers profit most</div></div>
-    <div class="stat-card"><div class="sc-lbl">Total CE OI / PE OI</div><div class="sc-val" id="oc-total-oi">—</div></div>
-  </div>
-
-  <!-- OI Signals -->
-  <div class="section" style="margin-bottom:14px">
-    <div class="sec-head"><div class="sec-title">OI Buildup / Unwinding Signals</div></div>
-    <div id="oc-signals" style="display:flex;flex-wrap:wrap;gap:8px">
-      <div style="color:var(--text3);font-size:12px">Loading signals...</div>
-    </div>
-  </div>
-
-  <!-- Options Chain Table -->
-  <div class="section" style="padding:0;overflow:hidden">
-    <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;min-width:900px" id="oc-table">
-        <thead>
-          <tr style="background:var(--bg3)">
-            <th colspan="5" style="text-align:center;padding:8px;font-size:11px;color:var(--green);border-bottom:1px solid var(--border);letter-spacing:1px">CALLS</th>
-            <th style="background:var(--bg4);padding:8px;font-size:11px;color:var(--text3);border:1px solid var(--border);text-align:center">STRIKE</th>
-            <th colspan="5" style="text-align:center;padding:8px;font-size:11px;color:var(--red);border-bottom:1px solid var(--border);letter-spacing:1px">PUTS</th>
-          </tr>
-          <tr style="background:var(--bg3)">
-            <th style="padding:7px 10px;font-size:9.5px;color:var(--text3);text-align:right;border-bottom:1px solid var(--border)">OI Chg</th>
-            <th style="padding:7px 10px;font-size:9.5px;color:var(--text3);text-align:right;border-bottom:1px solid var(--border)">OI</th>
-            <th style="padding:7px 10px;font-size:9.5px;color:var(--text3);text-align:right;border-bottom:1px solid var(--border)">Vol</th>
-            <th style="padding:7px 10px;font-size:9.5px;color:var(--text3);text-align:right;border-bottom:1px solid var(--border)">IV%</th>
-            <th style="padding:7px 10px;font-size:9.5px;color:var(--text3);text-align:right;border-bottom:1px solid var(--border)">LTP</th>
-            <th style="padding:7px 10px;font-size:10px;color:var(--text);text-align:center;background:var(--bg4);border:1px solid var(--border);font-weight:700">STRIKE</th>
-            <th style="padding:7px 10px;font-size:9.5px;color:var(--text3);border-bottom:1px solid var(--border)">LTP</th>
-            <th style="padding:7px 10px;font-size:9.5px;color:var(--text3);border-bottom:1px solid var(--border)">IV%</th>
-            <th style="padding:7px 10px;font-size:9.5px;color:var(--text3);border-bottom:1px solid var(--border)">Vol</th>
-            <th style="padding:7px 10px;font-size:9.5px;color:var(--text3);border-bottom:1px solid var(--border)">OI</th>
-            <th style="padding:7px 10px;font-size:9.5px;color:var(--text3);border-bottom:1px solid var(--border)">OI Chg</th>
-          </tr>
-        </thead>
-        <tbody id="oc-body"><tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3)">Loading options chain...</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-</div>
 
 <!-- ===== ADVANCED SCREENER PANEL ===== -->
 <div class="panel" id="panel-screener">
@@ -3679,7 +3610,7 @@ async function runBT(){
   const stratNames = {momentum:'Momentum (Golden Cross)',ml:'AI Score Strategy',sma_cross:'SMA Crossover',buy_hold:'Buy & Hold'};
 
   try{
-    const resp = await fetch(`${API_BASE}/api/backtest/run?symbol=${symbol}&period=${period}&strategy=${strategy}`);
+    const resp = await fetch(`${API_BASE}/api/backtest/run?symbol=${symbol}&period=${period}&strategy=${strategy}&capital=${capital}`);
     if(!resp.ok){
       const err = await resp.json().catch(()=>({detail:'Backtest failed'}));
       showToast(`⚠ ${err.detail || 'Backtest failed'}`);
@@ -5562,12 +5493,6 @@ async function loadOptionsChain() {
   }
 }
 
-// Auto-load when panel opens
-document.querySelector('[data-panel="options"]').addEventListener('click', () => {
-  setTimeout(() => { if (!_ocData) loadOptionsChain(); }, 100);
-});
-
-
 // ============================================================
 //  ADVANCED SCREENER
 // ============================================================
@@ -5804,8 +5729,8 @@ async function loadDailyPicks() {
   try {
     const res = await fetch('/api/daily-picks/');
     const d   = await res.json();
-    const sigColor = s => s>=4?'#00d4aa':s>=2?'#69f0ae':s>=0?'#ffab40':'#ff4757';
-    const sigLabel = s => s>=4?'STRONG BUY':s>=2?'BUY':s>=0?'WATCH':'SELL';
+    const sigColor = s => s>=85?'#00d4aa':s>=75?'#69f0ae':s>=50?'#ffab40':'#ff4757';
+    const sigLabel = s => s>=85?'STRONG BUY':s>=75?'BUY':s>=50?'WATCH':'CAUTION';
     wrap.innerHTML = `
       <div style="font-size:12px;color:var(--text3);margin-bottom:14px">
         ${d.date} · ${d.count} BUY signals found · Powered by StockVest ML + signal engine
@@ -5841,7 +5766,7 @@ async function loadDailyPicks() {
             </div>
             <div style="background:var(--bg3);border-radius:8px;padding:8px 10px">
               <div style="font-size:9px;color:var(--text3);margin-bottom:3px">SIGNAL SCORE</div>
-              <div style="font-family:var(--font-mono);font-size:14px;font-weight:600;color:${col}">${p.score}/10</div>
+              <div style="font-family:var(--font-mono);font-size:14px;font-weight:600;color:${col}">${p.score}/100</div>
             </div>
           </div>
           <div>${(p.reasons||[]).map(r=>`<div style="background:var(--bg3);border-radius:6px;padding:6px 10px;margin-bottom:5px;font-size:12px;color:var(--text2);border-left:2px solid ${col}">• ${r}</div>`).join('')}</div>

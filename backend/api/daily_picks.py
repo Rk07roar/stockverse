@@ -1,8 +1,14 @@
 """
 StockVest — api/daily_picks.py
-AI-powered daily stock picks using the existing signals + ML engine.
-Picks top 5 BUY signals each morning with plain-English reasoning.
+AI-powered daily stock picks using the real hybrid ML + technical scoring engine
+(ml/scoring.py — same engine that powers the ML Engine panel: GradientBoosting model
+blended with a 6-factor technical composite: RSI, MACD, momentum, Bollinger, volume,
+MA crossover). Picks the top BUY-signal stocks each morning with plain-English reasoning.
 Email delivery via Gmail SMTP (free).
+
+Candidates are drawn from real-data, liquid stocks (sorted by traded volume) rather
+than by raw change_pct — that avoids surfacing thinly-traded stocks whose "today's
+change" figure can be corrupted by bad prev-close data upstream.
 
 How to schedule this to run every morning at 9 AM:
   Option A (Windows Task Scheduler):
@@ -25,6 +31,7 @@ from datetime import datetime
 from fastapi import APIRouter
 from data.fetcher import DataFetcher
 from data.cache import Cache
+from ml.scoring import score_batch
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -32,93 +39,89 @@ router = APIRouter()
 GMAIL_USER     = os.getenv("GMAIL_USER", "")
 GMAIL_APP_PASS = os.getenv("GMAIL_APP_PASSWORD", "")
 
-
-# ── Reuse signal scoring from api/signals.py ────────────────────
-def _rsi(closes, period=14):
-    if len(closes) < period + 1:
-        return 50.0
-    deltas = [closes[i] - closes[i-1] for i in range(1, len(closes))]
-    gains  = [max(d, 0)    for d in deltas[-period:]]
-    losses = [abs(min(d,0)) for d in deltas[-period:]]
-    ag, al = sum(gains)/period, sum(losses)/period
-    return round(100 - (100 / (1 + ag/al)), 1) if al else 100.0
-
-def _ema(closes, period):
-    if len(closes) < period: return []
-    k = 2 / (period + 1)
-    e = [sum(closes[:period]) / period]
-    for p in closes[period:]:
-        e.append(p * k + e[-1] * (1-k))
-    return e
-
-def _score(closes, volumes, price):
-    score = 0; reasons = []
-    rsi   = _rsi(closes)
-    if rsi < 30:  score += 2; reasons.append(f"RSI {rsi} — deeply oversold")
-    elif rsi < 40: score += 1; reasons.append(f"RSI {rsi} — oversold")
-    elif rsi > 70: score -= 2; reasons.append(f"RSI {rsi} — overbought")
-    e20, e50 = _ema(closes, 20), _ema(closes, 50)
-    if e20 and e50:
-        if price > e20[-1] > e50[-1]: score += 1; reasons.append("Healthy uptrend: Price > EMA20 > EMA50")
-        if len(e20) >= 2 and len(e50) >= 2:
-            if e20[-1] > e50[-1] and e20[-2] <= e50[-2]: score += 2; reasons.append("Golden Cross just formed")
-    if len(volumes) >= 20:
-        avg = sum(volumes[-20:]) / 20
-        if avg > 0 and volumes[-1] / avg > 1.5 and closes[-1] > closes[-2]:
-            score += 1; reasons.append(f"Volume {volumes[-1]/avg:.1f}× average — institutional buying")
-    return score, rsi, reasons
+_CANDIDATE_POOL   = 40   # how many liquid, real-data stocks to run the ML/technical engine over
+_MIN_BUY_SCORE    = 65   # ml/scoring.py: BUY signal starts at 75, but we allow a slightly
+                         # wider "watch-worthy" floor so a thin market still returns a few picks
 
 
-async def _analyze(sym, name, price, change_pct):
-    try:
-        def _fetch():
-            import yfinance as yf, math
-            for sfx in [".NS", ".BO"]:
-                df = yf.Ticker(f"{sym}{sfx}").history(period="6mo", auto_adjust=True).dropna(subset=["Close"])
-                if len(df) >= 50:
-                    cls = [float(v) for v in df["Close"]]
-                    if any(math.isnan(c) for c in cls): continue
-                    vols = [int(v) if not math.isnan(float(v)) else 0 for v in df["Volume"]]
-                    return cls, vols
-            return None, None
-        loop = asyncio.get_running_loop()
-        closes, volumes = await loop.run_in_executor(None, _fetch)
-        if not closes: return None
-        sc, rsi, reasons = _score(closes, volumes or [], price)
-        return {"sym": sym, "name": name, "price": price, "change_pct": change_pct,
-                "score": sc, "rsi": rsi, "reasons": reasons[:3]}
-    except Exception:
-        return None
+def _reasons_from_score(r: dict) -> list:
+    """Build plain-English reasons from a real ml/scoring.compute_score() result."""
+    reasons = []
+    comps = r.get("components", {})
+    rsi = r.get("rsi")
+    if rsi is not None:
+        if rsi < 30:  reasons.append(f"RSI {rsi} — deeply oversold")
+        elif rsi < 40: reasons.append(f"RSI {rsi} — oversold")
+        elif rsi > 70: reasons.append(f"RSI {rsi} — overbought, caution")
+
+    if r.get("golden_cross"):
+        reasons.append("Golden Cross: MA50 above MA200 — bullish trend structure")
+
+    macd = comps.get("macd", {})
+    if macd.get("score", 0) >= 70:
+        reasons.append("MACD trending bullish")
+
+    vol = comps.get("volume", {})
+    if vol.get("ratio", 1) > 1.5:
+        reasons.append(f"Volume {vol['ratio']}× average — strong conviction")
+
+    ret20 = r.get("ret20d")
+    if ret20 is not None and ret20 > 5:
+        reasons.append(f"+{ret20}% over 20 days — positive momentum")
+
+    if r.get("ml_blend"):
+        reasons.append(f"ML model confidence {r.get('ml_model')}/100")
+
+    if not reasons:
+        reasons.append(f"Composite technical score {r['score']}/100")
+    return reasons
 
 
 async def _get_top_picks(n: int = 5) -> list:
-    """Run signals engine on Nifty100 and return top N BUY picks."""
+    """
+    Run the real hybrid ML + technical scoring engine (ml/scoring.py) over the most
+    liquid real-data stocks and return the top N by score. Same engine backing the
+    ML Engine panel and single-stock ML score endpoint — not a separate/fake metric.
+    """
     cache_key = "daily_picks:top"
     cached = await Cache.get(cache_key)
     if cached:
         return cached
 
-    stocks     = await DataFetcher.get_all_stocks(sort="ml_desc")
-    candidates = [s for s in stocks if s.get("real_data")][:40]
-    results    = await asyncio.gather(
-        *[_analyze(s["sym"], s["name"], s["price"], s["change_pct"]) for s in candidates[:25]],
-        return_exceptions=True
-    )
-    picks = sorted(
-        [r for r in results if isinstance(r, dict) and r["score"] >= 2],
-        key=lambda x: x["score"], reverse=True
-    )[:n]
+    stocks     = await DataFetcher.get_all_stocks(sort="vol_desc")
+    candidates = [s for s in stocks if s.get("real_data") and s.get("volume", 0) > 0][:_CANDIDATE_POOL]
+    if not candidates:
+        return []
+
+    scores = await score_batch([s["sym"] for s in candidates])
+
+    scored = []
+    for s in candidates:
+        r = scores.get(s["sym"]) or {}
+        if not r.get("real_data") or r.get("score", 0) < _MIN_BUY_SCORE:
+            continue
+        scored.append({
+            "sym": s["sym"], "name": s["name"], "price": s["price"],
+            "change_pct": s["change_pct"], "score": r["score"], "signal": r.get("signal", "BUY"),
+            "rsi": r.get("rsi"), "reasons": _reasons_from_score(r)[:3],
+        })
+
+    picks = sorted(scored, key=lambda x: x["score"], reverse=True)[:n]
 
     await Cache.set(cache_key, picks, ttl=3600)   # cache 1 hour
     return picks
 
 
+def _label_for_score(score: int) -> tuple:
+    if score >= 85: return ("STRONG BUY", "#00d4aa")
+    if score >= 75: return ("BUY", "#69f0ae")
+    return ("WATCH", "#ffab40")
+
+
 def _picks_email_html(picks: list, date_str: str) -> str:
-    signal_labels = {4: ("STRONG BUY", "#00d4aa"), 3: ("STRONG BUY", "#00d4aa"),
-                     2: ("BUY", "#69f0ae"), 1: ("WATCH", "#ffab40")}
     rows = ""
     for i, p in enumerate(picks, 1):
-        label, col = signal_labels.get(p["score"], ("WATCH", "#ffab40"))
+        label, col = _label_for_score(p["score"])
         chg_col    = "#00d4aa" if p["change_pct"] >= 0 else "#ff4757"
         chg_sign   = "+" if p["change_pct"] >= 0 else ""
         reasons_li = "".join(f'<li style="margin-bottom:4px;color:#8896a8;font-size:12px">{r}</li>'
@@ -152,7 +155,7 @@ def _picks_email_html(picks: list, date_str: str) -> str:
             <div>
               <div style="font-size:10px;color:#4a5568;margin-bottom:2px">SIGNAL SCORE</div>
               <div style="font-size:16px;font-weight:700;color:{col};font-family:monospace">
-                {p["score"]}/10</div>
+                {p["score"]}/100</div>
             </div>
           </div>
           <ul style="margin:0;padding-left:16px">{reasons_li}</ul>

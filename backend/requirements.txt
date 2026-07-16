@@ -11,7 +11,12 @@ python-multipart==0.0.9
 httpx==0.27.0
 
 # ── Market Data ───────────────────────────────────────────────
-yfinance==0.2.38
+# yfinance 0.2.38 predates Yahoo's crumb/cookie auth changes and curl_cffi-based
+# browser impersonation, which causes "Expecting value: line 1 column 1 (char 0)"
+# JSON decode errors on nearly every ticker request (breaks dashboard NIFTY chart,
+# backtesting, and watchlist intraday charts). Pinning to a current release fixes it.
+yfinance==1.5.1
+curl_cffi>=0.7.0
 
 # ── Data & ML ─────────────────────────────────────────────────
 pandas==2.2.3

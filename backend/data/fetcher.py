@@ -94,12 +94,17 @@ _YF_MISS_TTL = 2 * 3600               # don't retry for 2 hours
 # ── Price sanity check ────────────────────────────────────────
 _MAX_PRICE_MOVE = 0.40   # reject if new price deviates >40% from last known
 _MAX_ABSOLUTE_PRICE = 200_000  # no Indian equity trades above ₹2 lakh
+_MAX_CHANGE_PCT = 35     # NSE/BSE circuit bands almost never exceed this in one session —
+                         # anything higher is bad prev-close data (stale cache, unadjusted
+                         # split/bonus, upstream API glitch), not a real move
 
 def _sanity_filter(new_quotes: Dict[str, dict], existing: Dict[str, dict]) -> Dict[str, dict]:
     """
-    Return only the quotes whose price passes sanity checks:
+    Return only the quotes whose price/change data passes sanity checks:
       1. Price must be > 0 and <= _MAX_ABSOLUTE_PRICE
-      2. If we have a prior price, the change must be <= _MAX_PRICE_MOVE (40%)
+      2. Reported change_pct must be <= _MAX_CHANGE_PCT (catches bad prev-close
+         data even on first load, when there's no prior cached price to compare)
+      3. If we have a prior price, the change must be <= _MAX_PRICE_MOVE (40%)
     Logs every rejection so we can audit bad data.
     """
     clean: Dict[str, dict] = {}
@@ -108,6 +113,17 @@ def _sanity_filter(new_quotes: Dict[str, dict], existing: Dict[str, dict]) -> Di
         # Basic bounds
         if price <= 0 or math.isnan(price) or price > _MAX_ABSOLUTE_PRICE:
             logger.warning(f"PRICE REJECTED {sym}: price={price} out of bounds (0, {_MAX_ABSOLUTE_PRICE}]")
+            continue
+        # change_pct sanity — rejects bogus swings (e.g. +1176%) straight from bad upstream data
+        try:
+            chg_pct = float(q.get("change_pct", 0) or 0)
+        except (TypeError, ValueError):
+            chg_pct = float("nan")
+        if math.isnan(chg_pct) or abs(chg_pct) > _MAX_CHANGE_PCT:
+            logger.warning(
+                f"PRICE REJECTED {sym}: change_pct={chg_pct}% exceeds ±{_MAX_CHANGE_PCT}% "
+                f"sanity bound — likely bad prev-close data"
+            )
             continue
         # Change-rate check against last known price
         old = existing.get(sym)
@@ -424,8 +440,15 @@ class DataFetcher:
         try:
             with open(PRICE_CACHE_PATH, "r") as f:
                 cached = json.load(f)
-            cls._real_quotes.update(cached)
-            print(f"✓ Price cache loaded: {len(cached)} stocks with prices (instant)")
+            # Re-run sanity checks on disk cache too — otherwise a bad quote that
+            # slipped in before the checks existed (or before a bugfix) would keep
+            # reloading forever on every restart.
+            clean = _sanity_filter(cached, {})
+            rejected = len(cached) - len(clean)
+            if rejected:
+                logger.warning(f"Price cache load: {rejected} stale/bad cached quotes rejected")
+            cls._real_quotes.update(clean)
+            print(f"✓ Price cache loaded: {len(clean)} stocks with prices (instant)")
         except Exception as e:
             logger.warning(f"Price cache load failed: {e}")
 
@@ -743,8 +766,12 @@ class DataFetcher:
 
             # ── Apply yfinance results for stocks STILL missing after bhav copy ──
             if bse_yf:
+                clean_bse_yf = _sanity_filter(bse_yf, cls._real_quotes)
+                rejected = len(bse_yf) - len(clean_bse_yf)
+                if rejected:
+                    logger.warning(f"BSE yfinance fallback: {rejected} stocks rejected by sanity check")
                 new_bse_yf = 0
-                for code, q in bse_yf.items():
+                for code, q in clean_bse_yf.items():
                     if not cls._real_quotes.get(code, {}).get("price"):
                         cls._real_quotes[code] = q
                         new_bse_yf += 1
@@ -768,8 +795,12 @@ class DataFetcher:
                 try:
                     bse_grp = await loop.run_in_executor(None, fetch_bse_prices_by_group)
                     if bse_grp:
+                        clean_grp = _sanity_filter(bse_grp, cls._real_quotes)
+                        rejected = len(bse_grp) - len(clean_grp)
+                        if rejected:
+                            logger.warning(f"BSE group API: {rejected} stocks rejected by sanity check")
                         new_grp = 0
-                        for code, q in bse_grp.items():
+                        for code, q in clean_grp.items():
                             if not cls._real_quotes.get(code, {}).get("price"):
                                 cls._real_quotes[code] = q
                                 new_grp += 1
@@ -798,8 +829,12 @@ class DataFetcher:
                         None, fetch_bse_prices_per_stock, still_missing
                     )
                     if bse_api:
+                        clean_api = _sanity_filter(bse_api, cls._real_quotes)
+                        rejected = len(bse_api) - len(clean_api)
+                        if rejected:
+                            logger.warning(f"BSE per-stock API: {rejected} stocks rejected by sanity check")
                         new_api = 0
-                        for code, q in bse_api.items():
+                        for code, q in clean_api.items():
                             if not cls._real_quotes.get(code, {}).get("price"):
                                 cls._real_quotes[code] = q
                                 new_api += 1
